@@ -1,4 +1,4 @@
-name: frrlab
+name: frr_ospf_lab
 
 topology:
   nodes:
