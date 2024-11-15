@@ -26,12 +26,12 @@ sudo ip netns show
 
 ### Captura con tcpdump
 ```bash
-sudo ip netns exec clab-frrlab-router3 tcpdump -U -n -i eth1 -w capture.pcap
+sudo ip netns exec clab-frr_ospf_lab-router3 tcpdump -U -n -i eth1 -w capture.pcap
 ```
 
 ## Captura con tshark
 ```bash
-sudo ip netns exec clab-frrlab-router3 tshark -i eth1 -w /tmp/capture.pcap
+sudo ip netns exec clab-frr_ospf_lab-router3 tshark -i eth1 -w /tmp/capture.pcap
 ```
 ## Visualizar capturas
 
@@ -47,11 +47,11 @@ sudo wireshark capture.pcap
 
 ## Comandos de pruebas ping y traceroute
 ```bash
-docker exec -it clab-frrlab-PC1 traceroute 192.168.13.2
-docker exec -it clab-frrlab-PC1 ping -c4 192.168.13.2
+docker exec -it clab-frr_ospf_lab-PC1 traceroute 192.168.13.2
+docker exec -it clab-frr_ospf_lab-PC1 ping -c4 192.168.13.2
 ```
 ### Dar de baja o alta un enlace
 ```bash
-docker exec -d clab-frrlab-router1 ip link set dev eth2 down
-docker exec -d clab-frrlab-router1 ip link set dev eth2 up
+docker exec -d clab-frr_ospf_lab-router1 ip link set dev eth2 down
+docker exec -d clab-frr_ospf_lab-router1 ip link set dev eth2 up
 ```
