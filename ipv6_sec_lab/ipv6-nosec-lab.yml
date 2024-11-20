@@ -1,0 +1,17 @@
+name: ipv6-nosec
+
+topology:
+  nodes:
+    PC1:
+      kind: linux
+      image: docker.io/esanchezv/kaliipv6v2.1:latest
+      exec:
+      - ip -6 route del default dev eth0
+    PC2:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool:latest
+      exec:
+      - ip -6 route del default dev eth0
+
+  links:
+    - endpoints: ["PC1:eth1", "PC2:eth1"]
