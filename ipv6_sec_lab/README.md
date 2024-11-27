@@ -13,73 +13,84 @@ Al igual que en ARP Spoofing, el atacante envía mensajes falsos para engañar a
 En este laboratorio, se demuestra cómo un atacante puede utilizar mensajes de Router Advertisement (RA) para hacerse pasar por un router. De esta manera, el atacante intenta que las víctimas lo configuren como su puerta de enlace predeterminada.
 Para mitigar este ataque, se implementa RA-Guard, que bloquea la comunicación no autorizada en capa 2, permitiendo solo al router legítimo enviar paquetes a través de la dirección multicast de enlace local.
 
-## Ejemplos 
+## Ejemplo
 
-### Despliegue sin Seguridad
+Este escenario utiliza una topología básica compuesta por dos máquinas Linux, dos routers (SRL y FRR) y un switch, para demostrar la facilidad con la que se pueden ejecutar ataques NDP Spoofing y cómo mitigar dichos ataques utilizando RA-Guard en un router Nokia SRLinux.
 
-Este escenario utiliza una topología básica con dos máquinas Linux para demostrar la facilidad con la que se pueden ejecutar ataques NDP Spoofing.
+#### Clonar repositorio
 
-#### Inicializar la topologia
+Clona el repositorio que contiene los archivos necesarios para desplegar la topología:
 
 ```bash
-sudo clab deploy -t ipv6-nosec-lab.yml
+git clone https://github.com/ernestosv73/srl03
 ```
 
-#### Acceso a los dispositivos
+#### Editar la configuracion inicial
+
+1. Edita el archivo de configuración principal:
+   - Descomenta las líneas que siguen a **`name: srl03`** para habilitar el uso del bridge en la topología.
+2. Cambia la configuración de inicio (**`startup-config`**) del router **srl1** a **srl2.cfg**.
+
+#### Acceso a los nodos Linux
+
+Puedes acceder a las máquinas Linux para realizar las pruebas desde la terminal:
 
 ```bash
 # PC1 (Kali Linux)
-docker exec -it clab-ipv6-nosec-PC1 /bin/bash
-# PC2 (Network-Multitool)
-docker exec -it clab-ipv6-nosec-PC2 /bin/bash
+docker exec -it clab-srl02-PC1 /bin/bash
+# PC3 (Network-Multitool)
+docker exec -it clab-srl02-PC3 /bin/bash
 ```
 
+#### Acceso al router SRL
+
+Para conectarte al router SRLinux, utiliza SSH con las siguientes credenciales:
+
+```bash
+ssh admin@clab-srl02-srl1
+password: NokiaSrl1!
+```
 #### Iniciar el ataque
+
+Desde **PC1**, ejecuta el siguiente comando para realizar un ataque NDP Spoofing:
 
 ```bash
 # Ejecutamos el NDP Spoofing -> PC1
 atk6-fake_router6 eth1 2001:db8:ffff:1::/64
-# Comprobamos las ipv6 de nuestra PC2
+```
+
+Observamos las consecuencias en la PC y router SRLEn **PC3**, verifica las direcciones IPv6 asignadas:
+
+```bash
 ifconfig
 ```
 
-### Despligue con Seguridad
-
-En este escenario, se demuestra cómo mitigar el ataque utilizando RA-Guard.
-
-#### Clonar repositorio
+En el router SRLinux, comprueba las rutas afectadas:
 
 ```bash
-git clone https://github.com/ernestosv73/ipv6seclab
+show network-instance route-table
 ```
 
-#### Acceso a los nodos Linux
+#### Implementacion de RA-Guard en el nodo SRL
 
-```
-# PC1 (Kali Linux)
-docker exec -it clab-ipv6-nosec-PC1 /bin/bash
-# PC2 (Kali Linux)
-docker exec -it clab-ipv6-nosec-PC2 /bin/bash
-# PC3 (Network-Multitool)
-docker exec -it clab-ipv6-nosec-PC3 /bin/bash
-```
-
-#### Acceso a los nodos SRL (SRL1 y SRL2)
+Mitiga el ataque configurando RA-Guard en el router SRLinux:
 
 ```bash
-ssh admin@clab-ipv6sec-SRL1 o ssh admin@clab-ipv6sec-SRL2
-password: NokiaSrl1!
-```
-#### Implementacion de RA-Guard en el nodo SRL2
-
-```
 # Ingresamos al modo de configuracion
 enter candidate
-# Aplicamos la ra guard
+# Aplicamos la ra guard a nivel de sistema
+system ra-guard-policy "Discard all" action discard
+# Guardamos los cambios
+commit stay
+# Aplicamos la ra guard a nivel de interfaz mgmt0
 interface mgmt0 subinterface 0 ra-guard policy "Discard All"
 # Guardamos los cambios
 commit stay
+# Volvemos al modo running
+enter running
+# Volvemos a comprobar las rutas aplicando un nuevo ataque
+show network-instance route-table
 ```
 
-Para finalizar, realiza pruebas en el escenario utilizando los comandos del apartado anterior. Observa cómo el ataque es mitigado eficazmente.
+Con las configuraciones de RA-Guard aplicadas, el ataque NDP Spoofing es bloqueado eficazmente. Esto demuestra cómo las políticas de RA-Guard protegen la red al descartar paquetes maliciosos y mantener la integridad del enrutamiento.
 
